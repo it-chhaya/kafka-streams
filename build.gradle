@@ -1,0 +1,91 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.3'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id 'com.github.davidmc24.gradle.plugin.avro' version '1.9.1'
+}
+
+group = 'dev.chanchhaya'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://packages.confluent.io/maven/"
+    }
+}
+
+ext {
+    set('springCloudVersion', "2023.0.3")
+    confluentVersion = '7.8.0'
+}
+
+// Configure Avro plugin
+avro {
+    fieldVisibility = "PRIVATE"
+    createSetters = true
+    createOptionalGetters = false
+    gettersReturnOptional = false
+    optionalGettersForNullableFieldsOnly = false
+    templateDirectory = null
+    stringType = "String"
+    enableDecimalLogicalType = true
+}
+
+
+// Configure source sets to include Avro schema files
+sourceSets {
+    main {
+        resources {
+            srcDirs += ['src/main/avro']  // Add avro directory to resources
+        }
+    }
+}
+
+dependencies {
+
+    // Confluent & Avro dependencies
+    implementation "io.confluent:kafka-streams-avro-serde:${confluentVersion}"
+    implementation "io.confluent:kafka-schema-registry-client:${confluentVersion}"
+    implementation "io.confluent:kafka-avro-serializer:${confluentVersion}"
+
+    // If you need to generate classes from Avro schemas
+    implementation 'org.apache.avro:avro:1.12.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.apache.kafka:kafka-streams'
+    implementation 'org.springframework.cloud:spring-cloud-stream'
+    implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka-streams'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Make sure generateAvroJava runs before compilation
+tasks.named('compileJava').configure {
+    source += tasks.named('generateAvroJava')
+}

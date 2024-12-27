@@ -1,0 +1,20 @@
+{
+  "namespace": "dev.chanchhaya.mskafka.event",
+  // Make sure this matches your project's package
+  "type": "record",
+  "name": "OrderEvent",
+  "fields": [
+    {
+      "name": "orderId",
+      "type": "string"
+    },
+    {
+      "name": "orderType",
+      "type": "string"
+    },
+    {
+      "name": "orderPrice",
+      "type": "double"
+    }
+  ]
+}
