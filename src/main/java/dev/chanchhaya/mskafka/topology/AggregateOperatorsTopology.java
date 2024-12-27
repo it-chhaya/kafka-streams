@@ -31,16 +31,34 @@ public class AggregateOperatorsTopology {
         productStockIn
                 .print(Printed.<String, ProductStock>toSysOut().withLabel(PRODUCT_STOCK_IN_TOPIC));
 
-        KGroupedStream<String, ProductStock> groupProductStock = productStockIn
-                .groupByKey();
+        //KGroupedStream<String, ProductStock> groupProductStock = productStockIn
+        //.groupByKey();
         //.groupBy((key, value) -> value.getCode());
 
 
-        operatorCount(groupProductStock);
+        productStockIn
+                .split(Named.as("general-product"))
+                .branch((key, value) -> value.getCode().startsWith("PCR"),
+                        Branched.withConsumer(pcrProduct -> {
+                            pcrProduct
+                                    .print(Printed.<String, ProductStock>toSysOut().withLabel("pcr-product"));
+                            // Start invoke aggregation
+                        })
+                )
+                .branch((key, value) -> value.getCode().startsWith("PCS"),
+                        Branched.withConsumer(pcsProduct -> {
+                            pcsProduct
+                                    .print(Printed.<String, ProductStock>toSysOut().withLabel("pcs-product"));
+                            // Start invoke aggregation
+                        })
+                );
 
-        operatorReduce(groupProductStock);
 
-        operatorAggregate(groupProductStock);
+        //operatorCount(groupProductStock);
+
+        //operatorReduce(groupProductStock);
+
+        //operatorAggregate(groupProductStock);
 
         return streamsBuilder.build();
     }
